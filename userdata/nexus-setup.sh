@@ -5,13 +5,10 @@ mkdir -p /tmp/nexus/
 cd /tmp/nexus/
 NEXUSURL="https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
 wget $NEXUSURL -O nexus.tar.gz
-sleep 10
 EXTOUT=`tar xzvf nexus.tar.gz`
 NEXUSDIR=`echo $EXTOUT | cut -d '/' -f1`
-sleep 5
 rm -rf /tmp/nexus/nexus.tar.gz
-cp -r /tmp/nexus/* /opt/nexus/
-sleep 5
+rsync -avzh /tmp/nexus/ /opt/nexus/
 useradd nexus
 chown -R nexus.nexus /opt/nexus 
 cat <<EOT>> /etc/systemd/system/nexus.service
@@ -31,6 +28,11 @@ Restart=on-abort
 WantedBy=multi-user.target                                                      
 
 EOT
+
+echo 'run_as_user="nexus" > /opt/nexus/$NEXUSDIR/bn/nexus.rc
+systemctl daemon-reload
+systemctl start nexus
+systemctl enable nexus
 
 echo 'run_as_user="nexus"' > /opt/nexus/$NEXUSDIR/bin/nexus.rc
 systemctl daemon-reload
